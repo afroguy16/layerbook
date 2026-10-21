@@ -1,5 +1,5 @@
-import LayerBookApp from "@/components/layerbook-radar";
+import { V8App } from "@/components/v8/v8-app";
 
 export default function Page() {
-  return <LayerBookApp />;
+  return <V8App />;
 }
