@@ -108,6 +108,7 @@ const CAGE_OPTIONS = [
 
 export function DailyLogWizard() {
   const [selectedPen, setSelectedPen] = useState<PenInfo | null>(null);
+  const [drawer, setDrawer] = useState<boolean>(false);
   const [currentFlow, setCurrentFlow] = useState<
     "desktop" | "feed" | "eggs" | "water" | "droppings" | "mortality"
   >("desktop");
@@ -592,16 +593,15 @@ export function DailyLogWizard() {
         {!selectedPen && (
           <div className="flex-1 flex flex-col justify-between p-6">
             <div>
+              {/* Avatar Menu Trigger (Same as Home) */}
               <div className="flex items-center justify-between pb-4">
-                <span className="text-[13px] text-[#64748b] font-medium">
-                  LayerBook
-                </span>
-                <Link
-                  href="/"
-                  className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:scale-95 transition-transform"
+                <button
+                  aria-label="Menu"
+                  onClick={() => setDrawer(true)}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold bg-[#f7f1ea] text-[#78350f] active:scale-95 transition-transform"
                 >
-                  <X size={18} strokeWidth={2} />
-                </Link>
+                  AL
+                </button>
               </div>
 
               <h1 className="text-[26px] font-bold text-[#0f172a] tracking-tight mt-1 mb-2">
@@ -2006,6 +2006,86 @@ export function DailyLogWizard() {
                 Save Droppings Log
               </button>
             )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* AUTOBOOK DRAWER (WITH LOG <-> CONSOLE SWITCH IN FOOTER)        */}
+        {/* ============================================================== */}
+        {drawer && (
+          <div className="absolute inset-0 z-50 bg-white flex flex-col justify-between p-6 animate-in fade-in duration-200">
+            <div>
+              <div className="flex items-center justify-between pb-6 border-b border-slate-100">
+                <div className="flex items-center gap-3.5">
+                  <span className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-[#78350f] bg-[#f7f1ea] text-[15px]">
+                    AL
+                  </span>
+                  <b className="block text-[18px] text-[#0f172a] font-bold">
+                    Adeyemi Layers
+                  </b>
+                </div>
+                <button
+                  onClick={() => setDrawer(false)}
+                  className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Clean Single-Word Menu Items */}
+              <div className="py-4 divide-y divide-slate-100">
+                <div className="py-4 cursor-pointer hover:bg-slate-50 px-2 rounded-xl transition-colors">
+                  <span className="text-[17px] text-[#0f172a] font-semibold">
+                    Profile
+                  </span>
+                </div>
+
+                <div className="py-4 cursor-pointer hover:bg-slate-50 px-2 rounded-xl transition-colors">
+                  <span className="text-[17px] text-[#0f172a] font-semibold">
+                    Flock
+                  </span>
+                </div>
+
+                <div className="py-4 cursor-pointer hover:bg-slate-50 px-2 rounded-xl transition-colors">
+                  <span className="text-[17px] text-[#0f172a] font-semibold">
+                    Staff
+                  </span>
+                </div>
+
+                <div className="py-4 cursor-pointer hover:bg-slate-50 px-2 rounded-xl transition-colors">
+                  <span className="text-[17px] text-[#0f172a] font-semibold">
+                    Settings
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[12.5px] text-slate-400 pt-4 border-t border-slate-100">
+              <span>
+                Prototype powered by{" "}
+                <a
+                  href="https://emu.network"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#78350f] hover:underline"
+                >
+                  emu.network
+                </a>
+              </span>
+
+              {/* Small Toggle Menu: Log <-> Console (Owner) */}
+              <div className="inline-flex items-center rounded-lg bg-slate-100 p-0.5 text-[11.5px] font-semibold">
+                <span className="px-2.5 py-1 rounded-md bg-white text-[#0f172a] shadow-2xs">
+                  Log
+                </span>
+                <Link
+                  href="/"
+                  className="px-2.5 py-1 rounded-md text-slate-500 hover:text-[#0f172a] transition-colors"
+                >
+                  Console
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>

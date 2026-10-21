@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { theme } from "@/lib/theme";
 
 const badgeAv = "bg-[#f7f1ea] text-[#78350f]";
@@ -617,16 +618,31 @@ export function V8App() {
               </div>
             </div>
 
-            <div className="text-[12.5px] text-slate-400 pt-4 border-t border-slate-100">
-              Prototype powered by{" "}
-              <a 
-                href="https://emu.network" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="font-semibold text-[#78350f] hover:underline"
-              >
-                emu.network
-              </a>
+            <div className="flex items-center justify-between text-[12.5px] text-slate-400 pt-4 border-t border-slate-100">
+              <span>
+                Prototype powered by{" "}
+                <a 
+                  href="https://emu.network" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#78350f] hover:underline"
+                >
+                  emu.network
+                </a>
+              </span>
+
+              {/* Small Toggle Menu: Log <-> Console (Owner) */}
+              <div className="inline-flex items-center rounded-lg bg-slate-100 p-0.5 text-[11.5px] font-semibold">
+                <Link
+                  href="/log"
+                  className="px-2.5 py-1 rounded-md text-slate-500 hover:text-[#0f172a] transition-colors"
+                >
+                  Log
+                </Link>
+                <span className="px-2.5 py-1 rounded-md bg-white text-[#0f172a] shadow-2xs">
+                  Console
+                </span>
+              </div>
             </div>
           </div>
         )}
