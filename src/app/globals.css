@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-urgent-now: var(--urgent-now); --color-urgent-now-fg: var(--urgent-now-fg);
+  --color-urgent-now-soft: var(--urgent-now-soft); --color-urgent-now-soft-fg: var(--urgent-now-soft-fg);
+  --color-urgent-soon: var(--urgent-soon); --color-urgent-soon-fg: var(--urgent-soon-fg);
+  --color-urgent-soon-soft: var(--urgent-soon-soft); --color-urgent-soon-soft-fg: var(--urgent-soon-soft-fg);
+  --color-urgent-wait: var(--urgent-wait); --color-urgent-wait-fg: var(--urgent-wait-fg);
+  --color-urgent-wait-soft: var(--urgent-wait-soft); --color-urgent-wait-soft-fg: var(--urgent-wait-soft-fg);
+  --color-outside: var(--outside); --color-outside-fg: var(--outside-fg);
+  --color-wa-header: var(--wa-header);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-tint: var(--primary-tint);
+  --text-title: 20px; --text-title--line-height: 28px; --text-title--font-weight: 700;
+  --text-plate: 20px; --text-plate--line-height: 26px; --text-plate--font-weight: 700; --text-plate--letter-spacing: 0.05em;
+  --text-heading: 17px; --text-heading--line-height: 24px; --text-heading--font-weight: 600;
+  --text-body: 16px; --text-body--line-height: 24px;
+  --text-button: 16px; --text-button--line-height: 24px; --text-button--font-weight: 600;
+  --text-small: 14px; --text-small--line-height: 20px;
+  --font-mono: ui-monospace, Menlo, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Auto Book theme: exact tokens from "UI design spec: look and feel" (light only). */
+:root {
+  --background: #FFFFFF;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F2F4F7;
+  --secondary-foreground: #111827;
+  --muted: #F2F4F7;
+  --muted-foreground: #4B5563;
+  --accent: #EFF4FF;
+  --accent-foreground: #111827;
+  --destructive: #B42318;
+  --border: #D0D5DD;
+  --input: #98A2B3;
+  --ring: #1D4ED8;
+  --radius: 0.625rem;
+  /* Auto Book extras */
+  --urgent-now: #B42318;   --urgent-now-fg: #FFFFFF;
+  --urgent-now-soft: #FEE4E2; --urgent-now-soft-fg: #B42318;
+  --urgent-soon: #F79009;  --urgent-soon-fg: #111827;
+  --urgent-soon-soft: #FEF0C7; --urgent-soon-soft-fg: #7A2E0E;
+  --urgent-wait: #067647;  --urgent-wait-fg: #FFFFFF;
+  --urgent-wait-soft: #DCFAE6; --urgent-wait-soft-fg: #067647;
+  --outside: #F2F4F7;      --outside-fg: #344054;
+  --wa-header: #075E54;
+  --primary-pressed: #1E40AF;
+  --primary-tint: #EFF4FF;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+@layer base {
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  input, textarea { font-size: 16px; }
+}

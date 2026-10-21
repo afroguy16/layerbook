@@ -1,0 +1,63 @@
+<html><head><meta charset='utf-8'><style>
+body{margin:0;font-family:Roboto,Arial,sans-serif;background:#e5e7eb;display:flex;flex-wrap:wrap;gap:20px;padding:20px;width:1420px;align-content:flex-start}
+.ph{width:340px;height:700px;background:#fff;border-radius:24px;overflow:hidden;position:relative;box-shadow:0 4px 20px #0002}
+.top{height:56px;display:flex;align-items:center;padding:0 16px;font-size:18px;font-weight:600;background:#1e3a8a;color:#fff;gap:12px}
+.q{font-size:20px;font-weight:600;padding:20px 16px 4px}.s{font-size:14px;color:#64748b;padding:0 16px 12px}
+.ch{margin:8px 16px;height:56px;border:1px solid #cbd5e1;border-radius:14px;display:flex;align-items:center;padding:0 16px;font-size:16px}
+.ch.on{border:2px solid #2563eb;background:#eff6ff;color:#1e3a8a;font-weight:600}
+.ch span{margin-left:auto;font-size:13px;color:#64748b}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px}.g .ch{margin:0}
+.step{position:absolute;top:66px;right:16px;font-size:12px;color:#c7d2fe}
+.row{display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;border-bottom:1px solid #f1f5f9;font-size:16px}
+.c{width:22px;height:22px;border-radius:6px;background:#2563eb;color:#fff;font-size:14px;text-align:center;line-height:22px}
+.lab{margin-left:auto;font-size:13px}
+.sum{margin:12px 16px;padding:14px 16px;background:#f8fafc;border-radius:14px;font-size:15px;line-height:1.6}
+.sum b{font-size:17px}
+.bar{position:absolute;bottom:0;left:0;right:0;padding:12px;border-top:1px solid #e5e7eb;background:#fff}
+.btn{height:52px;border-radius:26px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px}
+.lnk{color:#2563eb;font-size:14px;text-align:center;padding:10px}
+.fee{font-size:13px;color:#64748b;text-align:center;padding-bottom:8px}
+
+.ph{flex:none}
+.cap{position:absolute;top:-1px}
+.tabs{display:flex;background:#1e3a8a;color:#c7d2fe;font-size:14px}.tabs div{flex:1;text-align:center;padding:12px 0}.tabs .a{color:#fff;border-bottom:3px solid #fff}
+.sub{font-size:13px;font-weight:400;opacity:.85}
+.r2{display:flex;align-items:center;padding:0 16px;height:72px;gap:12px;border-bottom:1px solid #f1f5f9}
+.av{width:44px;height:44px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.t{flex:1;min-width:0}.t b{font-size:16px;font-weight:600}.t div{font-size:14px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m{text-align:right;font-size:12px;color:#64748b}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.fab{position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:16px;background:#2563eb;color:#fff;font-size:30px;display:flex;align-items:center;justify-content:center}
+.inp{margin:8px 16px;height:56px;border:2px solid #2563eb;border-radius:14px;display:flex;align-items:center;padding:0 16px;font-size:18px;letter-spacing:.5px}
+.inp.o{border:1px solid #cbd5e1;color:#94a3b8;font-size:16px;letter-spacing:0}
+.lbl{font-size:13px;color:#64748b;padding:12px 16px 0}
+.h{font-size:13px;color:#64748b;padding:12px 16px 4px}
+.chip{height:48px;border:1px solid #cbd5e1;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:15px;padding:0 8px}
+.chip.on{border:2px solid #2563eb;background:#eff6ff;color:#1e3a8a;font-weight:600}
+.ug{margin:10px 16px;height:64px;border-radius:14px;display:flex;align-items:center;padding:0 16px;font-size:18px;font-weight:600;gap:12px;border:1px solid}
+.ug .dot{width:14px;height:14px}
+.ug span{margin-left:auto;font-size:13px;font-weight:400;color:#64748b}
+.prog{display:flex;gap:6px;padding:12px 16px 0}.prog i{flex:1;height:4px;border-radius:2px;background:#e5e7eb}.prog i.d{background:#2563eb}
+.sec{display:flex;align-items:center;height:56px;padding:0 16px;border-bottom:1px solid #f1f5f9;font-size:16px;gap:12px}
+.sec .k{color:#64748b;font-size:13px;width:64px}
+.sec a{margin-left:auto;color:#2563eb;font-size:14px}
+.toast{position:absolute;left:16px;right:16px;bottom:84px;background:#1f2937;color:#fff;border-radius:12px;padding:14px 16px;font-size:15px;display:flex}
+.toast span{margin-left:auto;color:#93c5fd}
+.new{background:#eff6ff}
+.badge{font-size:12px;border-radius:10px;padding:3px 8px;white-space:nowrap}
+.ok{background:#dcfce7;color:#166534}.wt{background:#fef3c7;color:#92400e}
+.btn2{height:52px;border-radius:26px;border:1px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:16px;margin:8px 0 0;color:#1e3a8a}
+.big{font-size:40px;font-weight:700;padding:8px 16px 0;color:#1e3a8a}
+.ic{width:20px;text-align:center}
+.sw{margin-left:auto;width:44px;height:26px;border-radius:13px;background:#cbd5e1;position:relative}.sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.sw.on{background:#2563eb}.sw.on:after{left:21px}
+.seg{margin-left:auto;display:flex;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;font-size:13px}.seg div{padding:6px 10px}.seg .a{background:#2563eb;color:#fff}
+.code{display:flex;gap:8px;padding:8px 16px}.code div{flex:1;height:52px;border:1px solid #cbd5e1;border-radius:10px;font-size:22px;display:flex;align-items:center;justify-content:center}
+.wa{background:#efeae2}.wtop{height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:16px;font-weight:600}
+.walab{position:absolute;top:0;left:0;right:0;background:#374151;color:#fff;font-size:11px;text-align:center;padding:3px;letter-spacing:.5px}
+.bub{max-width:250px;margin:8px 12px;padding:10px 12px;border-radius:12px;font-size:15px;line-height:1.45;background:#fff;box-shadow:0 1px 1px #0001}
+.bub.me{margin-left:auto;background:#e5e7eb}
+.bub small{display:block;text-align:right;font-size:11px;color:#94a3b8}
+.wbar{position:absolute;bottom:0;left:0;right:0;padding:8px;display:flex;gap:8px;background:#f8fafc}.wbar div{flex:1;height:44px;border-radius:22px;background:#fff;border:1px solid #e5e7eb;color:#94a3b8;display:flex;align-items:center;padding:0 16px;font-size:14px}
+.url{background:#f1f5f9;margin:8px;border-radius:18px;padding:8px 14px;font-size:13px;color:#475569}
+body{width:1420px}</style></head><body><div class='ph'><div class='top'><span style="display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;margin-left:-8px;flex:none"><span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:#fff;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span></span>Wallet</div><div class='s' style='padding-top:20px;padding-bottom:0'>Balance</div><div class='big'>₦4,600</div><div class='s'>Free credit at the start<br>Booking fee when completed: ₦200</div><div class='h'>Recent</div><div class='row'><div class='t'><b style='font-weight:400'>KJA 123 AB</b><div>Today</div></div><span class='lab'>−₦200</span></div><div class='row'><div class='t'><b style='font-weight:400'>LND 456 CD</b><div>Yesterday</div></div><span class='lab'>−₦200</span></div><div class='row'><div class='t'><b style='font-weight:400'>APP 789 EF</b><div>Tue</div></div><span class='lab'>−₦200</span></div><div class='row'><div class='t'><b style='font-weight:400'>Free credit</b><div>1 Oct</div></div><span class='lab' style='color:#16a34a'>+₦5,000</span></div><div class='bar'><div class='btn'>Top up</div></div></div><div class='ph'><div class='top'><span style="display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;margin-left:-8px;flex:none"><span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:#fff;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span></span>Top up</div><div class='q'>How much?</div><div class='s'>Balance ₦4,600</div><div class='ch'>₦2,000<span>10 bookings</span></div><div class='ch on'>₦5,000<span>25 bookings</span></div><div class='ch'>₦10,000<span>50 bookings</span></div><div class='ch'>Other</div><div class='lnk' style='margin-top:12px'>Have a code?</div><div class='bar'><div class='btn'>Next · ₦5,000</div></div></div><div class='ph'><div class='top'><span style="display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;margin-left:-8px;flex:none"><span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:#fff;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span></span>Top up</div><div class='q'>Have a code?</div><div class='inp'>LAGOS50</div><div style='color:#16a34a;padding:4px 16px;font-size:15px;font-weight:600'>✓ Code applied</div><div class='sum'>Per completed booking<br><s style='color:#94a3b8'>₦500</s> <b style='color:#16a34a'>₦200</b></div><div class='bar'><div class='btn'>Next</div></div></div><div class='ph'><div class='top'><span style="display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;margin-left:-8px;flex:none"><span style="display:inline-flex;width:36px;height:36px;border-radius:50%;background:#fff;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></span></span>Pay</div><div class='q'>Pay how?</div><div class='s'>₦5,000 top up</div><div class='ch on'>🏦  Bank transfer<span>Instant</span></div><div class='ch'>💳  Card</div><div class='bar'><div class='btn'>Pay ₦5,000</div></div></div><div class='ph'><div class='top'>Wallet</div><div style='text-align:center;padding-top:120px'><div style='width:88px;height:88px;border-radius:50%;background:#dcfce7;color:#16a34a;font-size:48px;line-height:88px;margin:auto'>✓</div><div class='q'>Paid ₦5,000</div><div class='s'>New balance ₦9,600</div></div><div class='bar'><div class='btn'>Done</div></div></div></body></html>
