@@ -19,6 +19,9 @@ import {
   ArrowLeft,
   Pencil,
   Trash2,
+  ClipboardEdit,
+  CheckSquare,
+  Inbox,
 } from "lucide-react";
 import { theme } from "@/lib/theme";
 
@@ -26,6 +29,73 @@ interface PenInfo {
   id: number;
   name: string;
   flockCount: number;
+}
+
+type ShiftPeriod = "Morning" | "Afternoon" | "Evening" | "Night";
+
+type DesktopModule = "feed" | "eggs" | "water" | "mortality" | "droppings";
+
+interface RoutineTaskDef {
+  id: string;
+  shift: ShiftPeriod;
+  code: string;
+  title: string;
+  subtitle: string;
+  modules: DesktopModule[];
+}
+
+const ROUTINE_TASKS: RoutineTaskDef[] = [
+  {
+    id: "morning",
+    shift: "Morning",
+    code: "MR",
+    title: "Morning Routine",
+    subtitle: "Feed · Eggs · Water",
+    modules: ["feed", "eggs", "water"],
+  },
+  {
+    id: "afternoon",
+    shift: "Afternoon",
+    code: "AF",
+    title: "Afternoon Routine",
+    subtitle: "Feed · Eggs",
+    modules: ["feed", "eggs"],
+  },
+  {
+    id: "evening",
+    shift: "Evening",
+    code: "EV",
+    title: "Evening Routine",
+    subtitle: "Feed · Eggs · Water",
+    modules: ["feed", "eggs", "water"],
+  },
+  {
+    id: "night",
+    shift: "Night",
+    code: "NT",
+    title: "Night Check",
+    subtitle: "Water · Mortality · Droppings",
+    modules: ["water", "mortality", "droppings"],
+  },
+];
+
+interface PenStoryEntry {
+  id: string;
+  penId: number;
+  penName: string;
+  dayLabel: string;
+  shift: ShiftPeriod;
+  storyKind: "task" | "generic";
+  taskTitle?: string;
+  timeLabel: string;
+  feedBags: number;
+  eggCrates: number;
+  crackedPcs: number;
+  waterLitres: number;
+  deadCount: number;
+  deadSummary?: string;
+  droppingsSummary: string;
+  hasIncident: boolean;
 }
 
 interface CasualtyItem {
@@ -106,8 +176,107 @@ const CAGE_OPTIONS = [
   "Row C · Cage C4",
 ];
 
+const INITIAL_STORIES: PenStoryEntry[] = [
+  {
+    id: "story-1",
+    penId: 1,
+    penName: "Pen 1",
+    dayLabel: "Today · Wed, 21 Oct",
+    shift: "Afternoon",
+    storyKind: "task",
+    taskTitle: "Afternoon routine",
+    timeLabel: "2:15 PM",
+    feedBags: 5,
+    eggCrates: 0,
+    crackedPcs: 0,
+    waterLitres: 0,
+    deadCount: 0,
+    droppingsSummary: "Normal",
+    hasIncident: false,
+  },
+  {
+    id: "story-2",
+    penId: 2,
+    penName: "Pen 2",
+    dayLabel: "Today · Wed, 21 Oct",
+    shift: "Morning",
+    storyKind: "task",
+    taskTitle: "Morning routine",
+    timeLabel: "9:40 AM",
+    feedBags: 4,
+    eggCrates: 26,
+    crackedPcs: 2,
+    waterLitres: 180,
+    deadCount: 0,
+    droppingsSummary: "Normal",
+    hasIncident: false,
+  },
+  {
+    id: "story-3",
+    penId: 1,
+    penName: "Pen 1",
+    dayLabel: "Today · Wed, 21 Oct",
+    shift: "Morning",
+    storyKind: "task",
+    taskTitle: "Morning routine",
+    timeLabel: "8:30 AM",
+    feedBags: 5,
+    eggCrates: 34,
+    crackedPcs: 3,
+    waterLitres: 210,
+    deadCount: 1,
+    deadSummary: "1 dead (Row B · Cage B4)",
+    droppingsSummary: "Normal",
+    hasIncident: true,
+  },
+  {
+    id: "story-4",
+    penId: 3,
+    penName: "Pen 3",
+    dayLabel: "Yesterday · Tue, 20 Oct",
+    shift: "Evening",
+    storyKind: "task",
+    taskTitle: "Evening routine",
+    timeLabel: "4:50 PM",
+    feedBags: 6,
+    eggCrates: 48,
+    crackedPcs: 1,
+    waterLitres: 310,
+    deadCount: 0,
+    droppingsSummary: "Normal",
+    hasIncident: false,
+  },
+  {
+    id: "story-5",
+    penId: 1,
+    penName: "Pen 1",
+    dayLabel: "Yesterday · Tue, 20 Oct",
+    shift: "Afternoon",
+    storyKind: "generic",
+    timeLabel: "2:10 PM",
+    feedBags: 5,
+    eggCrates: 28,
+    crackedPcs: 0,
+    waterLitres: 190,
+    deadCount: 0,
+    droppingsSummary: "Watery (Row A)",
+    hasIncident: true,
+  },
+];
+
 export function DailyLogWizard() {
+  const [activeTab, setActiveTab] = useState<"log" | "tasks" | "activity">(
+    "log"
+  );
   const [selectedPen, setSelectedPen] = useState<PenInfo | null>(null);
+  const [activeRoutineTask, setActiveRoutineTask] =
+    useState<RoutineTaskDef | null>(null);
+  const [logPenFilter, setLogPenFilter] = useState<"all" | number>("all");
+  const [taskPenFilter, setTaskPenFilter] = useState<number>(1);
+  const [activityFilter, setActivityFilter] = useState<"all" | "incidents">(
+    "all"
+  );
+  const [stories, setStories] = useState<PenStoryEntry[]>(INITIAL_STORIES);
   const [drawer, setDrawer] = useState<boolean>(false);
   const [currentFlow, setCurrentFlow] = useState<
     "desktop" | "feed" | "eggs" | "water" | "droppings" | "mortality"
@@ -261,6 +430,227 @@ export function DailyLogWizard() {
       )
     )
   ).join(", ");
+
+  // Reset current pen draft when selecting a pen or finishing a pass
+  const resetCurrentPenDraft = () => {
+    setTaskData({
+      feed: { logged: false, amount: 0, unit: "bags" },
+      eggs: {
+        logged: false,
+        unit: "crates",
+        cratesLg: "",
+        cratesMd: "",
+        cratesPl: "",
+        cratesJb: "",
+        crackedUnit: "pcs",
+        crackedLg: "",
+        crackedMd: "",
+        crackedPl: "",
+        crackedJb: "",
+      },
+      water: { logged: false, litres: 0 },
+      droppings: { logged: false, items: [] },
+      mortality: { logged: false, items: [] },
+    });
+    setFeedDraft("");
+    setWaterDraft("");
+    setEggDraft({ cratesLg: "", cratesMd: "", cratesPl: "", cratesJb: "" });
+    setCrackedDraft({
+      crackedLg: "",
+      crackedMd: "",
+      crackedPl: "",
+      crackedJb: "",
+    });
+    setCasualtiesList([]);
+    setDroppingsList([]);
+  };
+
+  // Complete Pen Story Submission when tapping "Done with Pen X" or "Complete Routine"
+  const handleCompletePenPass = () => {
+    if (!selectedPen) return;
+    const hasAnyData =
+      taskData.feed.logged ||
+      taskData.eggs.logged ||
+      taskData.water.logged ||
+      savedDeadCount > 0 ||
+      savedDroppingsCount > 0 ||
+      Boolean(activeRoutineTask);
+
+    if (hasAnyData) {
+      const feedInBags =
+        taskData.feed.unit === "kg"
+          ? Math.round((taskData.feed.amount / 25) * 10) / 10
+          : taskData.feed.amount;
+      const eggsInCrates =
+        taskData.eggs.unit === "pcs"
+          ? Math.round(savedEggTotal / 30)
+          : savedEggTotal;
+      const crackedCount =
+        (parseInt(taskData.eggs.crackedLg) || 0) +
+        (parseInt(taskData.eggs.crackedMd) || 0) +
+        (parseInt(taskData.eggs.crackedPl) || 0) +
+        (parseInt(taskData.eggs.crackedJb) || 0);
+
+      const newStory: PenStoryEntry = {
+        id: `story-${Date.now()}`,
+        penId: selectedPen.id,
+        penName: selectedPen.name,
+        dayLabel: "Today · Wed, 21 Oct",
+        shift: activeRoutineTask ? activeRoutineTask.shift : "Afternoon",
+        storyKind: activeRoutineTask ? "task" : "generic",
+        taskTitle: activeRoutineTask
+          ? activeRoutineTask.title.toLowerCase()
+          : undefined,
+        timeLabel: "Just now",
+        feedBags: feedInBags,
+        eggCrates: eggsInCrates,
+        crackedPcs: crackedCount,
+        waterLitres: taskData.water.litres,
+        deadCount: savedDeadCount,
+        deadSummary:
+          savedDeadCount > 0
+            ? `${savedDeadCount} dead (${taskData.mortality.items
+                .map((i) => i.cage)
+                .join(", ")})`
+            : undefined,
+        droppingsSummary:
+          savedDroppingsCount > 0 ? savedDroppingsSummary : "Normal",
+        hasIncident: savedDeadCount > 0 || savedDroppingsCount > 0,
+      };
+      setStories((prev) => [newStory, ...prev]);
+    }
+
+    resetCurrentPenDraft();
+    setActiveRoutineTask(null);
+    setSelectedPen(null);
+  };
+
+  // Today's Accumulated Totals (filtered by selected pill on Log tab)
+  const todayStoriesForLogFilter = stories.filter(
+    (s) =>
+      s.dayLabel.startsWith("Today") &&
+      (logPenFilter === "all" || s.penId === logPenFilter)
+  );
+  const todayTotalCrates = todayStoriesForLogFilter.reduce(
+    (sum, s) => sum + s.eggCrates,
+    0
+  );
+  const todayTotalCracked = todayStoriesForLogFilter.reduce(
+    (sum, s) => sum + s.crackedPcs,
+    0
+  );
+  const todayTotalFeed = todayStoriesForLogFilter.reduce(
+    (sum, s) => sum + s.feedBags,
+    0
+  );
+  const todayTotalWater = todayStoriesForLogFilter.reduce(
+    (sum, s) => sum + s.waterLitres,
+    0
+  );
+  const todayTotalDead = todayStoriesForLogFilter.reduce(
+    (sum, s) => sum + s.deadCount,
+    0
+  );
+  const todayAbnormalDroppings = todayStoriesForLogFilter.filter(
+    (s) => s.droppingsSummary !== "Normal"
+  ).length;
+
+  // Per-pen today summary helper for Pen cards on Log tab
+  const getPenTodayTotals = (penId: number) => {
+    const penToday = stories.filter(
+      (s) => s.dayLabel.startsWith("Today") && s.penId === penId
+    );
+    const crates = penToday.reduce((sum, s) => sum + s.eggCrates, 0);
+    const bags = penToday.reduce((sum, s) => sum + s.feedBags, 0);
+    return { crates, bags };
+  };
+
+  // Visibility helper for Pen Desktop modules (Unfiltered on Generic Log vs Pre-filtered on Task)
+  const isModuleVisible = (mod: DesktopModule): boolean => {
+    if (!activeRoutineTask) return true;
+    return activeRoutineTask.modules.includes(mod);
+  };
+
+  const getShiftStatus = (
+    penId: number,
+    taskDef: RoutineTaskDef
+  ): { status: "Done ✓" | "Partial" | "Open"; badgeClass: string } => {
+    const shiftStories = stories.filter(
+      (s) =>
+        s.dayLabel.startsWith("Today") &&
+        s.penId === penId &&
+        s.shift === taskDef.shift
+    );
+    if (shiftStories.length === 0) {
+      return {
+        status: "Open",
+        badgeClass: "bg-slate-100 text-[#64748b]",
+      };
+    }
+    const hasFeed = shiftStories.some((s) => s.feedBags > 0);
+    const hasEggs = shiftStories.some((s) => s.eggCrates > 0);
+    const hasWater = shiftStories.some((s) => s.waterLitres > 0);
+
+    const requiresFeed = taskDef.modules.includes("feed");
+    const requiresEggs = taskDef.modules.includes("eggs");
+    const requiresWater = taskDef.modules.includes("water");
+
+    if (taskDef.shift === "Night") {
+      return {
+        status: "Done ✓",
+        badgeClass: "bg-emerald-50 text-emerald-700",
+      };
+    }
+
+    const feedOk = !requiresFeed || hasFeed;
+    const eggsOk = !requiresEggs || hasEggs;
+    const waterOk = !requiresWater || hasWater || (hasFeed && hasEggs);
+
+    if (feedOk && eggsOk && waterOk) {
+      return {
+        status: "Done ✓",
+        badgeClass: "bg-emerald-50 text-emerald-700",
+      };
+    }
+    return {
+      status: "Partial",
+      badgeClass: "bg-amber-50 text-amber-800",
+    };
+  };
+
+  // Format a PenStoryEntry into a crisp Linear-style notification summary line
+  const formatStoryPreview = (story: PenStoryEntry): string => {
+    const parts: string[] = [];
+    if (story.eggCrates > 0) {
+      parts.push(
+        story.crackedPcs > 0
+          ? `${story.eggCrates} crates (${story.crackedPcs} cracked)`
+          : `${story.eggCrates} crates`
+      );
+    }
+    if (story.feedBags > 0) {
+      parts.push(`${story.feedBags} bags feed`);
+    }
+    if (story.waterLitres > 0) {
+      parts.push(`${story.waterLitres} L water`);
+    }
+    if (story.deadCount > 0) {
+      parts.push(story.deadSummary || `${story.deadCount} dead`);
+    }
+    if (story.droppingsSummary !== "Normal") {
+      parts.push(`${story.droppingsSummary} droppings`);
+    }
+    return parts.length > 0 ? parts.join(" · ") : "Routine check completed";
+  };
+
+  const filteredActivityStories =
+    activityFilter === "incidents"
+      ? stories.filter((s) => s.hasIncident)
+      : stories;
+
+  const groupedActivityDays = Array.from(
+    new Set(filteredActivityStories.map((s) => s.dayLabel))
+  );
 
   // Feed Keypad Handler
   const handleKeypad = (val: string) => {
@@ -588,59 +978,375 @@ export function DailyLogWizard() {
         className="relative w-full max-w-[480px] h-dvh bg-white flex flex-col justify-between overflow-hidden select-none shadow-sm"
       >
         {/* ============================================================== */}
-        {/* VIEW 0: PEN SELECTION                                          */}
+        {/* TAB 1: LOG (TODAY'S ACCUMULATION HERO + GENERIC PEN SELECTION) */}
         {/* ============================================================== */}
-        {!selectedPen && (
-          <div className="flex-1 flex flex-col justify-between p-6">
-            <div>
-              {/* Avatar Menu Trigger (Same as Home) */}
-              <div className="flex items-center justify-between pb-4">
-                <button
-                  aria-label="Menu"
-                  onClick={() => setDrawer(true)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold bg-[#f7f1ea] text-[#78350f] active:scale-95 transition-transform"
-                >
-                  AL
-                </button>
-              </div>
+        {activeTab === "log" && !selectedPen && (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Avatar Menu Trigger */}
+            <div className="px-6 pt-6 pb-2 flex items-center justify-between">
+              <button
+                aria-label="Menu"
+                onClick={() => setDrawer(true)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold bg-[#f7f1ea] text-[#78350f] active:scale-95 transition-transform"
+              >
+                AL
+              </button>
+            </div>
 
-              <h1 className="text-[26px] font-bold text-[#0f172a] tracking-tight mt-1 mb-2">
-                Select your pen
-              </h1>
-              <p className="text-[15px] text-gray-600 mb-6">
-                Pick a house to log tasks for today.
-              </p>
-
-              <div className="space-y-3">
-                {PENS.map((pen) => (
+            {/* Pen Switcher Pills for Today's Summary */}
+            <div className="px-6 pt-3 pb-1 flex items-center gap-2 overflow-x-auto no-scrollbar">
+              <button
+                type="button"
+                onClick={() => setLogPenFilter("all")}
+                className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-colors shrink-0 ${
+                  logPenFilter === "all"
+                    ? "bg-[#0f172a] text-white"
+                    : "bg-[#f4f6fa] text-[#64748b] hover:text-[#0f172a]"
+                }`}
+              >
+                All Pens
+              </button>
+              {PENS.map((pen) => {
+                const isSelected = logPenFilter === pen.id;
+                return (
                   <button
                     key={pen.id}
+                    type="button"
+                    onClick={() => setLogPenFilter(pen.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-colors shrink-0 ${
+                      isSelected
+                        ? "bg-[#0f172a] text-white"
+                        : "bg-[#f4f6fa] text-[#64748b] hover:text-[#0f172a]"
+                    }`}
+                  >
+                    {pen.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* PRIMARY HERO: TODAY'S COLLECTION (PURE AUTOBOOK) */}
+            <div className="px-6 pt-4 pb-2">
+              <div className="text-[13px] text-[#64748b] font-medium">
+                Today&apos;s Collection
+              </div>
+              <div className="mt-2 mb-1">
+                <span className="text-[56px] font-bold tracking-[-2px] leading-none text-[#0f172a]">
+                  {todayTotalCrates} crates
+                </span>
+              </div>
+              <div className="text-[14.5px] text-[#64748b]">
+                {todayTotalCracked > 0
+                  ? `${todayTotalCracked} pcs cracked today`
+                  : "0 cracked today"}
+              </div>
+            </div>
+
+            {/* DUAL BORDERLESS CARDS: FEED GIVEN & INCIDENTS */}
+            <div className="flex gap-3 px-6 pt-4 pb-2">
+              <div
+                className={`flex-1 text-left rounded-2xl px-5 py-4 ${theme.card}`}
+              >
+                <span className="text-[13px] text-[#64748b] block font-medium mb-1">
+                  Feed Given
+                </span>
+                <b className="block text-[24px] text-[#0f172a] font-bold tracking-tight">
+                  {todayTotalFeed} bags
+                </b>
+                <span className="text-[12px] text-[#64748b] mt-0.5 block">
+                  {todayTotalWater > 0
+                    ? `${todayTotalWater} L water`
+                    : "0 L water"}
+                </span>
+              </div>
+
+              <div
+                className={`flex-1 text-left rounded-2xl px-5 py-4 ${theme.card}`}
+              >
+                <span className="text-[13px] text-[#64748b] block font-medium mb-1">
+                  Incidents
+                </span>
+                <b className="block text-[24px] text-[#0f172a] font-bold tracking-tight">
+                  {todayTotalDead} dead
+                </b>
+                <span className="text-[12px] text-[#64748b] mt-0.5 block">
+                  {todayAbnormalDroppings > 0
+                    ? `${todayAbnormalDroppings} droppings issue`
+                    : "Normal droppings"}
+                </span>
+              </div>
+            </div>
+
+            {/* SECTION: SELECT A PEN TO LOG (GENERIC / UNFILTERED ACTIVITY) */}
+            <div className="px-6 pt-5 pb-1">
+              <h3 className="text-[17px] font-bold text-[#0f172a]">
+                Select a pen to log
+              </h3>
+            </div>
+
+            <div className="divide-y divide-[#f1f5f9] px-6 pb-8">
+              {PENS.filter(
+                (pen) => logPenFilter === "all" || pen.id === logPenFilter
+              ).map((pen) => {
+                const totals = getPenTodayTotals(pen.id);
+                const penCode = `P${pen.id}`;
+                return (
+                  <button
+                    key={pen.id}
+                    type="button"
                     onClick={() => {
+                      resetCurrentPenDraft();
+                      setActiveRoutineTask(null);
                       setSelectedPen(pen);
                       setCurrentFlow("desktop");
                     }}
-                    className="w-full p-4 rounded-xl bg-white border border-gray-200 hover:border-gray-300 active:scale-[0.99] transition-all text-left flex items-center justify-between"
+                    className="w-full py-4 flex items-center justify-between text-left active:opacity-75 transition-opacity"
                   >
-                    <div>
-                      <b className="text-[16px] text-gray-900 block font-semibold">
-                        {pen.name}
-                      </b>
-                      <span className="text-[13px] text-gray-500 mt-0.5 block">
-                        {pen.flockCount.toLocaleString()} birds
+                    <div className="flex items-center gap-3.5">
+                      <span className="w-10 h-10 rounded-full flex items-center justify-center text-[12.5px] font-semibold shrink-0 bg-[#f7f1ea] text-[#78350f]">
+                        {penCode}
                       </span>
+                      <div>
+                        <b className="text-[15px] text-[#0f172a] block font-semibold">
+                          {pen.name} · {pen.flockCount.toLocaleString()} birds
+                        </b>
+                        <span className="text-[12.5px] text-[#64748b] mt-0.5 block">
+                          {totals.crates} crates · {totals.bags} bags today
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[13px] font-medium text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">
-                      Select →
+                    <span className="text-[12px] font-semibold text-[#78350f] bg-[#f7f1ea] px-3 py-1 rounded-full shrink-0">
+                      Log →
                     </span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* VIEW 1: PEN DESKTOP                                            */}
+        {/* TAB 2: TASKS (ACTIONABLE MANAGER ROUTINES -> PRE-FILTERED)     */}
+        {/* ============================================================== */}
+        {activeTab === "tasks" && !selectedPen && (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Avatar Menu Trigger */}
+            <div className="px-6 pt-6 pb-2 flex items-center justify-between">
+              <button
+                aria-label="Menu"
+                onClick={() => setDrawer(true)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold bg-[#f7f1ea] text-[#78350f] active:scale-95 transition-transform"
+              >
+                AL
+              </button>
+            </div>
+
+            <div className="px-6 pt-2 pb-3">
+              <h1 className="text-[26px] font-bold text-[#0f172a] tracking-tight">
+                Tasks
+              </h1>
+              <p className="text-[14px] text-[#64748b] mt-0.5">
+                Tap a routine to log its required checks.
+              </p>
+            </div>
+
+            {/* Pen Switcher Pills */}
+            <div className="px-6 pb-3 flex items-center gap-2">
+              {PENS.map((pen) => {
+                const isSelected = taskPenFilter === pen.id;
+                return (
+                  <button
+                    key={pen.id}
+                    type="button"
+                    onClick={() => setTaskPenFilter(pen.id)}
+                    className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${
+                      isSelected
+                        ? "bg-[#0f172a] text-white"
+                        : "bg-[#f4f6fa] text-[#64748b] hover:text-[#0f172a]"
+                    }`}
+                  >
+                    {pen.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ACTIONABLE ROUTINE LIST (PURE AUTOBOOK LIST) */}
+            <div className="divide-y divide-[#f1f5f9] px-6 pb-8">
+              {ROUTINE_TASKS.map((taskDef) => {
+                const st = getShiftStatus(taskPenFilter, taskDef);
+                const targetPen =
+                  PENS.find((p) => p.id === taskPenFilter) || PENS[0];
+
+                return (
+                  <button
+                    key={taskDef.id}
+                    type="button"
+                    onClick={() => {
+                      resetCurrentPenDraft();
+                      setActiveRoutineTask(taskDef);
+                      setSelectedPen(targetPen);
+                      setCurrentFlow("desktop");
+                    }}
+                    className="w-full flex items-center justify-between py-4 text-left active:opacity-75 transition-opacity"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <span className="w-10 h-10 rounded-full flex items-center justify-center text-[12.5px] font-semibold shrink-0 bg-[#f7f1ea] text-[#78350f]">
+                        {taskDef.code}
+                      </span>
+                      <div>
+                        <b className="text-[15px] font-semibold text-[#0f172a] block">
+                          {taskDef.title}
+                        </b>
+                        <span className="text-[12.5px] text-[#64748b]">
+                          {taskDef.subtitle}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[12px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${st.badgeClass}`}
+                    >
+                      {st.status}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 3: ACTIVITY (SENIOR LINEAR DESIGNER NOTIFICATION STREAM)   */}
+        {/* ============================================================== */}
+        {activeTab === "activity" && !selectedPen && (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Top Bar: Avatar + Whisper Filter Pills */}
+            <div className="px-6 pt-6 pb-3 flex items-center justify-between">
+              <button
+                aria-label="Menu"
+                onClick={() => setDrawer(true)}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold bg-[#f7f1ea] text-[#78350f] active:scale-95 transition-transform"
+              >
+                AL
+              </button>
+
+              <div className="flex items-center gap-1 bg-[#f4f6fa] p-1 rounded-full">
+                <button
+                  type="button"
+                  onClick={() => setActivityFilter("all")}
+                  className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-all ${
+                    activityFilter === "all"
+                      ? "bg-white text-[#0f172a] shadow-2xs"
+                      : "text-[#64748b] hover:text-[#0f172a]"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivityFilter("incidents")}
+                  className={`px-3 py-1 rounded-full text-[12px] font-semibold transition-all flex items-center gap-1.5 ${
+                    activityFilter === "incidents"
+                      ? "bg-white text-[#0f172a] shadow-2xs"
+                      : "text-[#64748b] hover:text-[#0f172a]"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Incidents
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 pt-2 pb-3">
+              <h1 className="text-[26px] font-bold text-[#0f172a] tracking-tight">
+                Activity
+              </h1>
+            </div>
+
+            {/* Linear-Style Notification Stream */}
+            <div className="pb-8">
+              {groupedActivityDays.map((dayLabel) => {
+                const dayStories = filteredActivityStories.filter(
+                  (s) => s.dayLabel === dayLabel
+                );
+                const shortDayTitle = dayLabel.startsWith("Today")
+                  ? "Today"
+                  : dayLabel.startsWith("Yesterday")
+                  ? "Yesterday"
+                  : dayLabel;
+
+                return (
+                  <div key={dayLabel} className="mb-3">
+                    {/* Quiet Linear Group Header */}
+                    <div className="px-6 py-2 text-[12px] font-semibold text-[#64748b]">
+                      {shortDayTitle}
+                    </div>
+
+                    {/* Edge-to-Edge Notification Rows */}
+                    <div className="divide-y divide-[#f1f5f9]">
+                      {dayStories.map((story) => {
+                        const penCode = `P${story.penId}`;
+                        const activityLabel =
+                          story.storyKind === "task" && story.taskTitle
+                            ? story.taskTitle
+                            : "General log";
+                        return (
+                          <div
+                            key={story.id}
+                            className="px-6 py-3.5 flex items-start gap-3.5 hover:bg-[#f8fafc] transition-colors"
+                          >
+                            {/* Left: Warm Circular Avatar with micro-status dot */}
+                            <div className="relative shrink-0 mt-0.5">
+                              <span className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-semibold bg-[#f7f1ea] text-[#78350f]">
+                                {penCode}
+                              </span>
+                              {story.hasIncident && (
+                                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 ring-2 ring-white" />
+                              )}
+                            </div>
+
+                            {/* Center: 2-Line Scannable Pen Story */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <div className="truncate text-[14px]">
+                                  <span className="font-semibold text-[#0f172a]">
+                                    {story.penName}
+                                  </span>
+                                  <span className="text-[#94a3b8] mx-1.5">
+                                    ·
+                                  </span>
+                                  <span className="text-[#475569] font-medium">
+                                    {activityLabel}
+                                  </span>
+                                </div>
+                                <span className="text-[12px] text-[#94a3b8] tabular-nums shrink-0">
+                                  {story.timeLabel}
+                                </span>
+                              </div>
+
+                              <p className="text-[13px] text-[#64748b] mt-0.5 leading-snug truncate">
+                                {formatStoryPreview(story)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {groupedActivityDays.length === 0 && (
+                <div className="px-6 py-12 text-center text-[13.5px] text-[#94a3b8]">
+                  No activity matching this filter.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* VIEW 1: PEN DESKTOP (UNFILTERED GENERIC OR PRE-FILTERED TASK)  */}
         {/* ============================================================== */}
         {selectedPen && currentFlow === "desktop" && (
           <div className="flex-1 flex flex-col justify-between p-6 overflow-y-auto">
@@ -648,218 +1354,253 @@ export function DailyLogWizard() {
               {/* Top Bar */}
               <div className="flex items-center pb-4">
                 <button
-                  onClick={() => setSelectedPen(null)}
-                  className="text-[13.5px] font-semibold text-gray-500 hover:text-gray-900 flex items-center gap-1 -ml-1 active:scale-95 transition-all"
+                  onClick={() => {
+                    setActiveRoutineTask(null);
+                    setSelectedPen(null);
+                  }}
+                  className="text-[13.5px] font-semibold text-[#64748b] hover:text-[#0f172a] flex items-center gap-1 -ml-1 active:scale-95 transition-all"
                 >
                   <ChevronLeft size={18} strokeWidth={2.2} />
-                  Switch Pen
+                  {activeRoutineTask ? "Back to Tasks" : "Back"}
                 </button>
               </div>
 
-              <div className="mb-6">
-                <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">
-                  {activePen.name}
+              <div className="mb-5">
+                <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">
+                  {activeRoutineTask
+                    ? `${activePen.name} · ${activeRoutineTask.title}`
+                    : activePen.name}
                 </h1>
               </div>
 
-              {/* DAILY ROUTINE */}
-              <div className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">
-                Daily Routine
-              </div>
-
-              <div className="grid grid-cols-2 gap-3.5 mb-3.5">
-                {/* Feed Given */}
+              {/* DUAL BORDERLESS CARDS: FEED GIVEN & EGG HARVEST */}
+              {(isModuleVisible("feed") || isModuleVisible("eggs")) && (
                 <div
-                  onClick={() => {
-                    setFeedDraft(
-                      taskData.feed.logged && taskData.feed.amount > 0
-                        ? taskData.feed.amount.toString()
-                        : ""
-                    );
-                    setFeedUnit(taskData.feed.unit);
-                    setCurrentFlow("feed");
-                  }}
-                  className="rounded-2xl p-4 bg-[#f8fafc] border border-gray-200/80 cursor-pointer active:scale-[0.98] transition-transform flex flex-col justify-between min-h-[136px] hover:border-gray-300"
+                  className={`grid ${
+                    isModuleVisible("feed") && isModuleVisible("eggs")
+                      ? "grid-cols-2"
+                      : "grid-cols-1"
+                  } gap-3 mb-6`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                      <Wheat size={20} strokeWidth={2} />
-                    </span>
-                    <span
-                      className={`text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full ${
-                        taskData.feed.logged
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
+                  {/* Feed Given */}
+                  {isModuleVisible("feed") && (
+                    <div
+                      onClick={() => {
+                        setFeedDraft(
+                          taskData.feed.logged && taskData.feed.amount > 0
+                            ? taskData.feed.amount.toString()
+                            : ""
+                        );
+                        setFeedUnit(taskData.feed.unit);
+                        setCurrentFlow("feed");
+                      }}
+                      className={`rounded-2xl p-4 ${theme.card} cursor-pointer active:scale-[0.98] transition-transform flex flex-col justify-between min-h-[132px]`}
                     >
-                      {taskData.feed.logged ? "Logged ✓" : "Pending"}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-[13px] text-gray-500 font-medium block">
-                      Feed Given
-                    </span>
-                    <b className="block text-[21px] text-gray-900 font-bold tracking-tight leading-tight mt-0.5">
-                      {taskData.feed.logged
-                        ? `${taskData.feed.amount} ${taskData.feed.unit}`
-                        : "Tap to log"}
-                    </b>
-                  </div>
-                </div>
+                      <div className="flex items-center justify-between">
+                        <span className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-700 flex items-center justify-center">
+                          <Wheat size={19} strokeWidth={2} />
+                        </span>
+                        <span
+                          className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
+                            taskData.feed.logged
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-[#f7f1ea] text-[#78350f]"
+                          }`}
+                        >
+                          {taskData.feed.logged ? "Logged ✓" : "+ Log"}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="text-[13px] text-[#64748b] font-medium block">
+                          Feed Given
+                        </span>
+                        <b className="block text-[22px] text-[#0f172a] font-bold tracking-tight leading-tight mt-0.5">
+                          {taskData.feed.logged
+                            ? `${taskData.feed.amount} ${taskData.feed.unit}`
+                            : `0 ${taskData.feed.unit}`}
+                        </b>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Egg Harvest */}
-                <div
-                  onClick={() => {
-                    setEggScreen("main");
-                    setCurrentFlow("eggs");
-                  }}
-                  className="rounded-2xl p-4 bg-[#f8fafc] border border-gray-200/80 cursor-pointer active:scale-[0.98] transition-transform flex flex-col justify-between min-h-[136px] hover:border-gray-300"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                      <Egg size={20} strokeWidth={2} />
-                    </span>
-                    <span
-                      className={`text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full ${
-                        taskData.eggs.logged
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
+                  {/* Egg Harvest */}
+                  {isModuleVisible("eggs") && (
+                    <div
+                      onClick={() => {
+                        setEggScreen("main");
+                        setCurrentFlow("eggs");
+                      }}
+                      className={`rounded-2xl p-4 ${theme.card} cursor-pointer active:scale-[0.98] transition-transform flex flex-col justify-between min-h-[132px]`}
                     >
-                      {taskData.eggs.logged ? "Logged ✓" : "Pending"}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-[13px] text-gray-500 font-medium block">
-                      Egg Harvest
-                    </span>
-                    <b className="block text-[21px] text-gray-900 font-bold tracking-tight leading-tight mt-0.5">
-                      {taskData.eggs.logged
-                        ? `${savedEggTotal} ${taskData.eggs.unit}`
-                        : "Tap to log"}
-                    </b>
-                  </div>
-                </div>
-              </div>
-
-              {/* Water Meter */}
-              <div
-                onClick={() => setCurrentFlow("water")}
-                className="rounded-2xl p-3.5 bg-[#f8fafc] border border-gray-200/80 cursor-pointer active:scale-[0.99] transition-transform flex items-center justify-between hover:border-gray-300 mb-6"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-9 h-9 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
-                    <Droplets size={18} strokeWidth={2} />
-                  </span>
-                  <div>
-                    <b className="text-[14.5px] text-gray-900 block font-semibold leading-tight">
-                      Water Intake
-                    </b>
-                    <span className="text-[12.5px] text-gray-500">
-                      {taskData.water.logged
-                        ? `${taskData.water.litres} L recorded`
-                        : "Tap to log meter reading"}
-                    </span>
-                  </div>
-                </div>
-                <span
-                  className={`text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full ${
-                    taskData.water.logged
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {taskData.water.logged ? "Logged ✓" : "Optional"}
-                </span>
-              </div>
-
-              {/* INCIDENTS */}
-              <div className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2.5">
-                Incidents
-              </div>
-
-              <div className="space-y-2.5">
-                {/* Mortality */}
-                <div
-                  onClick={openMortalityFlow}
-                  className="rounded-2xl p-3.5 bg-[#f8fafc] border border-gray-200/80 cursor-pointer active:scale-[0.99] transition-transform flex items-center justify-between hover:border-gray-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center shrink-0">
-                      <AlertTriangle size={18} strokeWidth={2} />
-                    </span>
-                    <div>
-                      <b className="text-[14.5px] text-gray-900 block font-semibold leading-tight">
-                        Mortality
-                      </b>
-                      <span className="text-[12.5px] text-gray-500">
-                        {savedDeadCount > 0
-                          ? `${savedDeadCount} dead across ${taskData.mortality.items.length} ${
-                              taskData.mortality.items.length === 1
-                                ? "cage"
-                                : "cages"
-                            }`
-                          : "0 dead today"}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="w-10 h-10 rounded-xl bg-sky-100/80 text-sky-600 flex items-center justify-center">
+                          <Egg size={19} strokeWidth={2} />
+                        </span>
+                        <span
+                          className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
+                            taskData.eggs.logged
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-[#f7f1ea] text-[#78350f]"
+                          }`}
+                        >
+                          {taskData.eggs.logged ? "Logged ✓" : "+ Log"}
+                        </span>
+                      </div>
+                      <div className="mt-3">
+                        <span className="text-[13px] text-[#64748b] font-medium block">
+                          Egg Harvest
+                        </span>
+                        <b className="block text-[22px] text-[#0f172a] font-bold tracking-tight leading-tight mt-0.5">
+                          {taskData.eggs.logged
+                            ? `${savedEggTotal} ${taskData.eggs.unit}`
+                            : `0 ${taskData.eggs.unit}`}
+                        </b>
+                      </div>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* CHECKS & INCIDENTS (PURE AUTOBOOK DIVIDE-Y LIST) */}
+              {(isModuleVisible("water") ||
+                isModuleVisible("mortality") ||
+                isModuleVisible("droppings")) && (
+                <>
+                  <div className="pb-1">
+                    <h3 className="text-[17px] font-bold text-[#0f172a]">
+                      Checks &amp; incidents
+                    </h3>
                   </div>
 
-                  <span
-                    className={`text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full ${
-                      savedDeadCount > 0
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-emerald-50 text-emerald-700"
-                    }`}
-                  >
-                    {savedDeadCount > 0 ? `${savedDeadCount} logged` : "Normal ✓"}
-                  </span>
-                </div>
+                  <div className="divide-y divide-[#f1f5f9]">
+                    {/* Water Intake */}
+                    {isModuleVisible("water") && (
+                      <div
+                        onClick={() => setCurrentFlow("water")}
+                        className="py-4 flex items-center justify-between cursor-pointer active:opacity-75 transition-opacity"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <span className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+                            <Droplets size={18} strokeWidth={2} />
+                          </span>
+                          <div>
+                            <b className="text-[15px] text-[#0f172a] block font-semibold">
+                              Water Intake
+                            </b>
+                            <span className="text-[12.5px] text-[#64748b]">
+                              {taskData.water.logged
+                                ? `${taskData.water.litres} L recorded`
+                                : "0 L recorded"}
+                            </span>
+                          </div>
+                        </div>
+                        <span
+                          className={`text-[12px] font-semibold px-2.5 py-1 rounded-full ${
+                            taskData.water.logged
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-[#f7f1ea] text-[#78350f]"
+                          }`}
+                        >
+                          {taskData.water.logged ? "Logged ✓" : "+ Log"}
+                        </span>
+                      </div>
+                    )}
 
-                {/* Droppings */}
-                <div
-                  onClick={openDroppingsFlow}
-                  className="rounded-2xl p-3.5 bg-[#f8fafc] border border-gray-200/80 cursor-pointer active:scale-[0.99] transition-transform flex items-center justify-between hover:border-gray-300"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-9 h-9 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center shrink-0">
-                      <Activity size={18} strokeWidth={2} />
-                    </span>
-                    <div>
-                      <b className="text-[14.5px] text-gray-900 block font-semibold leading-tight">
-                        Droppings
-                      </b>
-                      <span className="text-[12.5px] text-gray-500">
-                        {savedDroppingsCount > 0
-                          ? `${savedDroppingsSummary} across ${savedDroppingsCount} ${
-                              savedDroppingsCount === 1 ? "location" : "locations"
-                            }`
-                          : "Normal (Formed)"}
-                      </span>
-                    </div>
+                    {/* Mortality */}
+                    {isModuleVisible("mortality") && (
+                      <div
+                        onClick={openMortalityFlow}
+                        className="py-4 flex items-center justify-between cursor-pointer active:opacity-75 transition-opacity"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <span className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                            <AlertTriangle size={18} strokeWidth={2} />
+                          </span>
+                          <div>
+                            <b className="text-[15px] text-[#0f172a] block font-semibold">
+                              Mortality
+                            </b>
+                            <span className="text-[12.5px] text-[#64748b]">
+                              {savedDeadCount > 0
+                                ? `${savedDeadCount} dead across ${
+                                    taskData.mortality.items.length
+                                  } ${
+                                    taskData.mortality.items.length === 1
+                                      ? "cage"
+                                      : "cages"
+                                  }`
+                                : "0 dead today"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`text-[12px] font-semibold px-2.5 py-0.5 rounded-full ${
+                            savedDeadCount > 0
+                              ? "bg-amber-50 text-amber-800"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {savedDeadCount > 0
+                            ? `${savedDeadCount} logged`
+                            : "Normal ✓"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Droppings */}
+                    {isModuleVisible("droppings") && (
+                      <div
+                        onClick={openDroppingsFlow}
+                        className="py-4 flex items-center justify-between cursor-pointer active:opacity-75 transition-opacity"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <span className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                            <Activity size={18} strokeWidth={2} />
+                          </span>
+                          <div>
+                            <b className="text-[15px] text-[#0f172a] block font-semibold">
+                              Droppings
+                            </b>
+                            <span className="text-[12.5px] text-[#64748b]">
+                              {savedDroppingsCount > 0
+                                ? `${savedDroppingsSummary} across ${savedDroppingsCount} ${
+                                    savedDroppingsCount === 1
+                                      ? "location"
+                                      : "locations"
+                                  }`
+                                : "Normal (Formed)"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`text-[12px] font-semibold px-2.5 py-0.5 rounded-full ${
+                            savedDroppingsCount > 0
+                              ? "bg-amber-50 text-amber-800"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {savedDroppingsCount > 0
+                            ? `${savedDroppingsCount} logged`
+                            : "Normal ✓"}
+                        </span>
+                      </div>
+                    )}
                   </div>
-
-                  <span
-                    className={`text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full ${
-                      savedDroppingsCount > 0
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-emerald-50 text-emerald-700"
-                    }`}
-                  >
-                    {savedDroppingsCount > 0
-                      ? `${savedDroppingsCount} logged`
-                      : "Normal ✓"}
-                  </span>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
-            {/* Bottom Big Tap Target to Return to Pen Selection */}
+            {/* Bottom Big Tap Target to Submit Pen Pass & Return */}
             <button
               type="button"
-              onClick={() => setSelectedPen(null)}
+              onClick={handleCompletePenPass}
               className="w-full h-[52px] rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white font-semibold text-[15px] active:scale-[0.99] transition-all mt-6 shrink-0"
             >
-              Done with {activePen.name}
+              {activeRoutineTask
+                ? `Complete ${activeRoutineTask.title}`
+                : `Done with ${activePen.name}`}
             </button>
           </div>
         )}
@@ -949,10 +1690,10 @@ export function DailyLogWizard() {
                       key={k}
                       type="button"
                       onClick={() => handleKeypad(k)}
-                      className={`h-13 rounded-xl flex items-center justify-center font-semibold active:scale-95 transition-all select-none ${
+                      className={`h-13 rounded-2xl flex items-center justify-center font-semibold active:scale-95 transition-all select-none ${
                         isDelete
-                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          : "bg-gray-50 hover:bg-gray-100 text-gray-900 text-[22px] border border-gray-200/70"
+                          ? "bg-[#f4f6fa] text-[#64748b] hover:bg-slate-200/70"
+                          : "bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] text-[22px]"
                       }`}
                     >
                       {isDelete ? <Delete size={20} strokeWidth={2} /> : k}
@@ -1156,9 +1897,9 @@ export function DailyLogWizard() {
                         {currentCasualtyDraft.photos.map((photoLabel, idx) => (
                           <div
                             key={idx}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-xs font-medium text-gray-800"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#f4f6fa] text-xs font-medium text-[#0f172a]"
                           >
-                            <Camera size={13} className="text-gray-500" />
+                            <Camera size={13} className="text-[#64748b]" />
                             <span>{photoLabel}</span>
                             <button
                               type="button"
@@ -1176,7 +1917,7 @@ export function DailyLogWizard() {
                     <button
                       type="button"
                       onClick={handleAddCasualtyPhoto}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      className="w-full px-4 py-3.5 rounded-xl bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                     >
                       <Camera size={16} strokeWidth={2} />
                       <span>
@@ -1196,7 +1937,7 @@ export function DailyLogWizard() {
                   <button
                     type="button"
                     onClick={handleStartNewCasualty}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Add another cage</span>
@@ -1212,7 +1953,7 @@ export function DailyLogWizard() {
                       {casualtiesList.map((item) => (
                         <div
                           key={item.id}
-                          className="bg-white rounded-xl p-4 border border-gray-200 flex items-center justify-between gap-3"
+                          className={`rounded-2xl p-4 ${theme.card} flex items-center justify-between gap-3`}
                         >
                           <div>
                             <h4 className="text-[15px] font-semibold text-gray-900">
@@ -1407,13 +2148,15 @@ export function DailyLogWizard() {
                     <button
                       type="button"
                       onClick={() => setEggScreen("cracked")}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
+                      className="w-full bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Log cracked eggs (optional)</span>
                     </button>
                   ) : (
-                    <div className="bg-white rounded-xl p-4 border border-gray-200 flex items-center justify-between gap-3">
+                    <div
+                      className={`rounded-2xl p-4 ${theme.card} flex items-center justify-between gap-3`}
+                    >
                       <div>
                         <h4 className="text-[15px] font-semibold text-gray-900">
                           Cracked Eggs ({totalCrackedEggs} {crackedUnit})
@@ -1843,24 +2586,28 @@ export function DailyLogWizard() {
                             onClick={() =>
                               handleToggleDroppingsCondition(condKey)
                             }
-                            className={`w-full px-4 py-3.5 rounded-xl bg-white border transition-all text-left flex items-center justify-between ${
+                            className={`w-full px-4 py-3.5 rounded-xl transition-all text-left flex items-center justify-between ${
                               isSelected
-                                ? "border-gray-900 ring-2 ring-gray-100"
-                                : "border-gray-200 hover:border-gray-300"
+                                ? "bg-[#0f172a] text-white"
+                                : "bg-[#f4f6fa] text-[#0f172a] hover:bg-slate-200/70"
                             }`}
                           >
                             <div className="flex items-center gap-2.5">
                               <span
                                 className={`w-2 h-2 rounded-full ${meta.dotClass}`}
                               />
-                              <span className="text-[15px] font-medium text-gray-900">
+                              <span
+                                className={`text-[15px] font-medium ${
+                                  isSelected ? "text-white" : "text-[#0f172a]"
+                                }`}
+                              >
                                 {meta.label}
                               </span>
                             </div>
                             {isSelected && (
                               <Check
                                 size={18}
-                                className="text-gray-900 shrink-0"
+                                className="text-white shrink-0"
                                 strokeWidth={2.5}
                               />
                             )}
@@ -1881,9 +2628,9 @@ export function DailyLogWizard() {
                         {currentDroppingsDraft.photos.map((photoLabel, idx) => (
                           <div
                             key={idx}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 text-xs font-medium text-gray-800"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#f4f6fa] text-xs font-medium text-[#0f172a]"
                           >
-                            <Camera size={13} className="text-gray-500" />
+                            <Camera size={13} className="text-[#64748b]" />
                             <span>{photoLabel}</span>
                             <button
                               type="button"
@@ -1901,7 +2648,7 @@ export function DailyLogWizard() {
                     <button
                       type="button"
                       onClick={handleAddDroppingsPhoto}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                      className="w-full px-4 py-3.5 rounded-xl bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                     >
                       <Camera size={16} strokeWidth={2} />
                       <span>
@@ -1920,7 +2667,7 @@ export function DailyLogWizard() {
                   <button
                     type="button"
                     onClick={handleStartNewDroppings}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
+                    className="w-full bg-[#f4f6fa] hover:bg-slate-200/70 text-[#0f172a] font-medium text-sm rounded-xl py-3.5 px-4 flex items-center justify-center gap-2 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Add another cage or row</span>
@@ -1939,7 +2686,7 @@ export function DailyLogWizard() {
                         return (
                           <div
                             key={item.id}
-                            className="bg-white rounded-xl p-4 border border-gray-200 flex items-center justify-between gap-3"
+                            className={`rounded-2xl p-4 ${theme.card} flex items-center justify-between gap-3`}
                           >
                             <div>
                               <h4 className="text-[15px] font-semibold text-gray-900">
@@ -2007,6 +2754,52 @@ export function DailyLogWizard() {
               </button>
             )}
           </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* BOTTOM NAVIGATION BAR (SHOWN ON TOP-LEVEL VIEWS)               */}
+        {/* ============================================================== */}
+        {!selectedPen && (
+          <nav className="shrink-0 h-[64px] bg-white border-t border-[#f1f5f9] px-4 flex items-center justify-between z-10">
+            <button
+              type="button"
+              onClick={() => setActiveTab("log")}
+              className={`flex flex-col items-center gap-1 flex-1 text-[11px] font-medium transition-colors ${
+                activeTab === "log"
+                  ? "text-[#78350f] font-bold"
+                  : "text-[#94a3b8]"
+              }`}
+            >
+              <ClipboardEdit size={20} strokeWidth={1.9} />
+              <span>Log</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("tasks")}
+              className={`flex flex-col items-center gap-1 flex-1 text-[11px] font-medium transition-colors ${
+                activeTab === "tasks"
+                  ? "text-[#78350f] font-bold"
+                  : "text-[#94a3b8]"
+              }`}
+            >
+              <CheckSquare size={20} strokeWidth={1.9} />
+              <span>Tasks</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("activity")}
+              className={`flex flex-col items-center gap-1 flex-1 text-[11px] font-medium transition-colors ${
+                activeTab === "activity"
+                  ? "text-[#78350f] font-bold"
+                  : "text-[#94a3b8]"
+              }`}
+            >
+              <Inbox size={20} strokeWidth={1.9} />
+              <span>Activity</span>
+            </button>
+          </nav>
         )}
 
         {/* ============================================================== */}
