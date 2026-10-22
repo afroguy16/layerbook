@@ -4,7 +4,14 @@ import React from "react";
 import { ChipRow } from "./intake-chips";
 import { errorText, fieldLabel, inputBad, inputBase, inputOk } from "./intake-theme";
 import type { Intake } from "./use-intake";
-import { BIRD_OPTIONS, WHO_OPTIONS, type BirdBucket, type WhoLogs } from "./types";
+import {
+  BIRD_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  WHO_OPTIONS,
+  type BirdBucket,
+  type Relationship,
+  type WhoLogs,
+} from "./types";
 
 function errorClass(error?: string) {
   return error ? inputBad : inputOk;
@@ -20,7 +27,7 @@ function FieldError({ error }: { error?: string }) {
 }
 
 export function IntakeFields({ intake }: { intake: Intake }) {
-  const { values, errors, setField, blur, toggleWho, isSubmitting } = intake;
+  const { values, errors, setField, blur, toggleWho, toggleRelationship, isSubmitting } = intake;
 
   return (
     <>
@@ -92,6 +99,17 @@ export function IntakeFields({ intake }: { intake: Intake }) {
         />
         <FieldError error={errors.farm} />
       </div>
+
+      <ChipRow<Relationship>
+        label="Is this your farm"
+        hint="(optional)"
+        options={RELATIONSHIP_OPTIONS}
+        selected={values.relationship ? [values.relationship] : []}
+        columns="grid-cols-3"
+        clearable
+        disabled={isSubmitting}
+        onToggle={toggleRelationship}
+      />
 
       <ChipRow<BirdBucket>
         label="How many birds"

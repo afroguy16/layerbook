@@ -1,7 +1,7 @@
 "use server";
 
 import type { IntakePayload, SubmitResult } from "@/components/intake/types";
-import { BIRD_OPTIONS, WHO_OPTIONS } from "@/components/intake/types";
+import { BIRD_OPTIONS, RELATIONSHIP_OPTIONS, WHO_OPTIONS } from "@/components/intake/types";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -53,6 +53,8 @@ function compose(payload: IntakePayload): { subject: string; text: string } {
     `WhatsApp: ${values.phone.trim()}`,
     `Email: ${values.email.trim()}`,
     `Farm: ${values.farm.trim()}`,
+    // Optional field. "not given" is a real answer here, not a missing value.
+    `Relationship: ${labels(values.relationship ? [values.relationship] : [], RELATIONSHIP_OPTIONS)}`,
     `Birds: ${birdLabel(payload)}`,
     `Logs daily: ${whoLabel(payload)}`,
   ];

@@ -1,5 +1,12 @@
 export type BirdBucket = "under500" | "500to2k" | "2kto10k" | "10kplus";
 export type WhoLogs = "me" | "manager" | "attendants";
+export type Relationship = "own" | "advise" | "both";
+
+export const RELATIONSHIP_OPTIONS: { value: Relationship; label: string }[] = [
+  { value: "own", label: "I run the farm" },
+  { value: "advise", label: "I advise farms" },
+  { value: "both", label: "Both" },
+];
 
 export const BIRD_OPTIONS: { value: BirdBucket; label: string }[] = [
   { value: "under500", label: "Under 500" },
@@ -21,6 +28,9 @@ export type IntakeValues = {
   farm: string;
   birds: BirdBucket | null;
   who: WhoLogs[];
+  // Optional. Absent is a valid answer and must stay that way: this exists so a
+  // consultant advising farms is not forced to answer as an owner.
+  relationship: Relationship | null;
 };
 
 export type IntakeField = keyof IntakeValues;
@@ -44,6 +54,7 @@ export const emptyValues: IntakeValues = {
   farm: "",
   birds: null,
   who: [],
+  relationship: null,
 };
 
 export const emptyAnswers: IntakeAnswers = {

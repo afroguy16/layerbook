@@ -9,6 +9,7 @@ import {
   type IntakeAnswers,
   type IntakeField,
   type IntakeValues,
+  type Relationship,
   type Touched,
   type WhoLogs,
 } from "./types";
@@ -69,6 +70,16 @@ export function useIntake() {
       who: prev.who.includes(value)
         ? prev.who.filter((w) => w !== value)
         : [...prev.who, value],
+    }));
+    setError(null);
+  }, []);
+
+  // Optional and clearable: tapping the chosen chip again returns it to "not
+  // answered", so a mis-tap does not force an answer he did not mean to give.
+  const toggleRelationship = useCallback((value: Relationship) => {
+    setValues((prev) => ({
+      ...prev,
+      relationship: prev.relationship === value ? null : value,
     }));
     setError(null);
   }, []);
@@ -150,6 +161,7 @@ export function useIntake() {
     setHoneypot,
     setField,
     toggleWho,
+    toggleRelationship,
     blur,
     setAnswer: (value: string) => setAnswers((prev) => ({ ...prev, wish: value })),
     submit,
