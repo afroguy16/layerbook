@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { submitIntake } from "@/app/actions/submit-intake";
+import { useIntakeStore } from "@/store/intake-store";
 import {
   emptyAnswers,
   emptyValues,
@@ -12,7 +13,6 @@ import {
   type WhoLogs,
 } from "./types";
 
-const STORAGE_KEY = "layerbook_intake_submitted";
 const HONEYPOT_DELAY_MS = 2500;
 
 // Client-only. Kept out of types.ts because the server action imports that module.
@@ -47,19 +47,16 @@ export function useIntake() {
   const [openedAt] = useState(() => Date.now());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState<IntakeValues | null>(null);
-  const [answersSent, setAnswersSent] = useState(false);
   const [skipped, setSkipped] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(STORAGE_KEY)) setAlreadySubmitted(true);
-    } catch {
-      // storage unavailable, treat as first visit
-    }
-  }, []);
+  // Persisted, so a reload keeps the submission and stage two still has a contact.
+  const submission = useIntakeStore((s) => s.submission);
+  const answersSent = useIntakeStore((s) => s.answersSent);
+  const recordSubmission = useIntakeStore((s) => s.recordSubmission);
+  const recordAnswers = useIntakeStore((s) => s.recordAnswers);
+
+  const alreadySubmitted = submission !== null;
 
   const setField = useCallback(<F extends IntakeField>(field: F, value: IntakeValues[F]) => {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -103,7 +100,7 @@ export function useIntake() {
     if (!isFormValid || isSubmitting) return;
 
     if (looksLikeBot) {
-      setSubmitted(values);
+      recordSubmission(values);
       return;
     }
 
@@ -113,29 +110,24 @@ export function useIntake() {
     setIsSubmitting(false);
 
     if (result.ok) {
-      setSubmitted(values);
-      try {
-        window.localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-      } catch {
-        // non fatal
-      }
+      recordSubmission(values);
     } else {
       setError(result.error);
     }
-  }, [isFormValid, isSubmitting, looksLikeBot, values]);
+  }, [isFormValid, isSubmitting, looksLikeBot, values, recordSubmission]);
 
   const sendAnswers = useCallback(async () => {
-    if (!submitted || answersSent || isSubmitting) return;
+    if (!submission || answersSent || isSubmitting) return;
     if (answersCount(answers) === 0) return;
 
     setIsSubmitting(true);
     setError(null);
-    const result = await submitIntake({ kind: "answers", values: submitted, answers });
+    const result = await submitIntake({ kind: "answers", values: submission, answers });
     setIsSubmitting(false);
 
-    if (result.ok) setAnswersSent(true);
+    if (result.ok) recordAnswers();
     else setError(result.error);
-  }, [answers, answersSent, isSubmitting, submitted]);
+  }, [answers, answersSent, isSubmitting, submission, recordAnswers]);
 
   const skipAnswers = useCallback(() => {
     setError(null);
@@ -149,7 +141,7 @@ export function useIntake() {
     errors,
     isFormValid,
     isSubmitting,
-    submitted,
+    submitted: submission,
     answersSent,
     skipped,
     alreadySubmitted,
@@ -159,7 +151,8 @@ export function useIntake() {
     setField,
     toggleWho,
     blur,
-    setAnswer: (value: string) => setAnswers((prev) => ({ ...prev, wish: value })),    submit,
+    setAnswer: (value: string) => setAnswers((prev) => ({ ...prev, wish: value })),
+    submit,
     sendAnswers,
     skipAnswers,
   };
