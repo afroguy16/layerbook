@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
-// Static export, single page, hash-routed. No query params.
-const nextConfig: NextConfig = { output: "export", images: { unoptimized: true } };
+// App Router, server actions enabled (pilot intake posts through /app/actions/submit-intake).
+// Pages without dynamic APIs still prerender at build.
+const nextConfig: NextConfig = { images: { unoptimized: true } };
 export default nextConfig;
