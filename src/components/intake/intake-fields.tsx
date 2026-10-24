@@ -101,11 +101,11 @@ export function IntakeFields({ intake }: { intake: Intake }) {
       </div>
 
       <ChipRow<Relationship>
-        label="Is this your farm"
+        label="How are you connected to this farm?"
         hint="(optional)"
         options={RELATIONSHIP_OPTIONS}
         selected={values.relationship ? [values.relationship] : []}
-        columns="grid-cols-3"
+        columns="grid-cols-2"
         clearable
         disabled={isSubmitting}
         onToggle={toggleRelationship}

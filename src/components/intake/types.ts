@@ -1,11 +1,16 @@
 export type BirdBucket = "under500" | "500to2k" | "2kto10k" | "10kplus";
 export type WhoLogs = "me" | "manager" | "attendants";
-export type Relationship = "own" | "advise" | "both";
+export type Relationship =
+  | "owner_runs"
+  | "owner_manager"
+  | "owner_absent"
+  | "adviser";
 
 export const RELATIONSHIP_OPTIONS: { value: Relationship; label: string }[] = [
-  { value: "own", label: "I run the farm" },
-  { value: "advise", label: "I advise farms" },
-  { value: "both", label: "Both" },
+  { value: "owner_runs", label: "I own it and run it" },
+  { value: "owner_manager", label: "I own it, a manager runs it" },
+  { value: "owner_absent", label: "I own it but rarely visit" },
+  { value: "adviser", label: "I advise it" },
 ];
 
 export const BIRD_OPTIONS: { value: BirdBucket; label: string }[] = [
